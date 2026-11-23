@@ -252,3 +252,9 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:70
 .ms-date{color:#A9ADB7;font-weight:600}
 .ms-t{color:var(--lime);font-weight:800;font-variant-numeric:tabular-nums}
 .ms-what{font-weight:700}
+
+/* ---------- список команды ---------- */
+.al-list{display:flex;flex-direction:column;border-top:1px solid var(--line);margin-top:4px}
+.al-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.al-row b{display:block;font-size:14px}
+.al-row small{display:block;font-size:12px;color:var(--ink-2)}

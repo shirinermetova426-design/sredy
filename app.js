@@ -46,6 +46,8 @@ function ruError(e) {
   if (/row-level security|permission denied/i.test(m)) return "Нет прав на это действие.";
   if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return "Нет связи с сервером. Проверь интернет.";
   if (/duplicate key.*date/i.test(m)) return "На эту дату встреча уже есть.";
+  if (/Database error saving new user/i.test(m)) return "Не получилось создать аккаунт. Напиши админу.";
+  if (/allowed_emails_email_check/i.test(m)) return "Проверь адреса почты в списке.";
   return m || "Что-то пошло не так.";
 }
 
@@ -73,7 +75,7 @@ function supabaseStore() {
     async userId() { const { data } = await sb.auth.getSession(); return data.session?.user?.id || null; },
     async signIn(email, password) { chk(await sb.auth.signInWithPassword({ email, password })); },
     async signUp(name, email, password) {
-      const d = chk(await sb.auth.signUp({ email, password, options: { data: { name } } }));
+      const d = chk(await sb.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: location.origin + location.pathname } }));
       return { needsConfirm: !d.session };
     },
     async signOut() { await sb.auth.signOut(); },
@@ -83,6 +85,11 @@ function supabaseStore() {
       chk(await sb.auth.updateUser({ password }));
     },
     profiles: tbl("profiles"), meetings: tbl("meetings"), tasks: tbl("tasks"), ideas: tbl("ideas"),
+    allowed: {
+      list: async () => chk(await sb.from("allowed_emails").select("*").order("added_at")),
+      add: async rows => chk(await sb.from("allowed_emails").upsert(rows, { onConflict: "email" })),
+      remove: async email => chk(await sb.from("allowed_emails").delete().eq("email", email))
+    },
     subscribe(onChange) {
       if (channel) sb.removeChannel(channel);
       channel = sb.channel("sredy-all")
@@ -171,6 +178,11 @@ function demoStore() {
     async resetSend() {}, async resetConfirm() {},
     async resetDemo() { db = seed(); persist(); session = null; lsSet(SKEY, null); },
     demoPeople: () => db.profiles,
+    allowed: {
+      list: async () => JSON.parse(JSON.stringify(db.allowed || [])),
+      add: async rows => { db.allowed = db.allowed || []; rows.forEach(r => { const i = db.allowed.findIndex(x => x.email === r.email); if (i >= 0) db.allowed[i] = r; else db.allowed.push(r); }); persist(); },
+      remove: async email => { db.allowed = (db.allowed || []).filter(x => x.email !== email); persist(); }
+    },
     profiles: tbl("profiles"), meetings: tbl("meetings"), tasks: tbl("tasks"), ideas: tbl("ideas"),
     subscribe(cb) { onChange = cb; },
     onAuth() {}
@@ -392,6 +404,7 @@ function renderTeam() {
     <div class="person pending">${av(p.id, "lg")}<div class="info"><b>${esc(p.name)}</b><small>Зарегистрировался, ждёт доступа</small></div>
     <div class="person-actions"><button class="btn-s" data-approve="${p.id}">Пустить</button><button class="btn-s ghost" data-reject="${p.id}">Удалить</button></div></div>`).join("") : "";
   $("#teamList").innerHTML = (CFG.team || []).map(t => `<div class="team ${t.need ? "need" : ""}"><div class="team-top"><h3>${esc(t.dept)}</h3>${t.need ? '<span class="need-badge">Нужен человек</span>' : ""}</div><div class="who">${esc(t.who)}</div>${t.note ? `<p>${esc(t.note)}</p>` : ""}</div>`).join("");
+  renderAllowed();
   const ppl = approved();
   $("#peopleCount").textContent = ppl.length + " чел.";
   $("#peopleList").innerHTML = ppl.map(p => {
@@ -403,6 +416,32 @@ function renderTeam() {
   }).join("");
   const pn = isAdmin() ? pend.length : 0;
   $("#teamBadge").hidden = !pn; $("#teamBadge").textContent = pn;
+}
+
+let allowedRows = null;
+async function loadAllowed() { if (!isAdmin()) return; try { allowedRows = await store.allowed.list(); } catch (e) { allowedRows = []; } renderAllowed(); }
+function renderAllowed() {
+  const box = $("#allowedBox"); if (!box) return;
+  if (!isAdmin()) { box.innerHTML = ""; return; }
+  if (allowedRows === null) { box.innerHTML = ""; loadAllowed(); return; }
+  box.innerHTML = `<div class="sec-h"><h2>Список команды</h2><span class="muted">${allowedRows.length} почт</span></div>
+    <div class="group"><p class="muted">Кто есть в этом списке, регистрируется на сайте сам, со своим паролем, и сразу получает доступ. Вставь строки вида <b>Имя — почта</b>, по одной на строку.</p>
+      <label class="f" for="al-text">Почты<textarea id="al-text" placeholder="Аня — anya@gmail.com&#10;Виталик — vitalik@mail.ru"></textarea></label>
+      <label class="f" for="al-role">Роль для этих людей<select id="al-role"><option value="member">Участник</option><option value="leader">Лидер</option></select></label>
+      <button class="btn dark" id="al-add">Добавить в список</button><p class="err" id="al-err"></p>
+      ${allowedRows.length ? `<div class="al-list">${allowedRows.map(a => `<div class="al-row"><div><b>${esc(a.name || a.email.split("@")[0])}</b><small>${esc(a.email)} · ${ROLES[a.role] || a.role}</small></div><button class="btn-s ghost" data-al-del="${esc(a.email)}">Убрать</button></div>`).join("")}</div>` : ""}
+    </div>`;
+}
+function parseAllowed(text, role) {
+  const rows = [], bad = [];
+  text.split(/\n+/).map(l => l.trim()).filter(Boolean).forEach(line => {
+    const m = line.match(/[^\s<>,;:()]+@[^\s<>,;:()]+\.[^\s<>,;:()]+/);
+    if (!m) { bad.push(line); return; }
+    const email = m[0].toLowerCase();
+    const name = line.replace(m[0], "").replace(/[<>()]/g, "").replace(/^[\s—–\-:,;|]+|[\s—–\-:,;|]+$/g, "").trim();
+    rows.push({ email, name, role });
+  });
+  return { rows, bad };
 }
 
 function renderIdeas() {
@@ -739,6 +778,14 @@ document.addEventListener("click", async e => {
     try { await store.profiles.remove(rj.dataset.reject); await loadTable("profiles"); toast("Удалён"); renderApp(); } catch (err) { toast(ruError(err), true); } return;
   }
   const idel = t.closest("[data-idea-del]"); if (idel) { try { await store.ideas.remove(idel.dataset.ideaDel); await loadTable("ideas"); renderIdeas(); } catch (err) { toast(ruError(err), true); } return; }
+  if (t.closest("#al-add")) {
+    const { rows, bad } = parseAllowed($("#al-text").value, $("#al-role").value);
+    if (!rows.length) { $("#al-err").textContent = "Не нашла ни одной почты. Пример строки: Аня — anya@gmail.com"; return; }
+    try { await store.allowed.add(rows); allowedRows = null; toast(`Добавлено: ${rows.length}` + (bad.length ? `, без почты: ${bad.length}` : "")); renderAllowed(); }
+    catch (err) { $("#al-err").textContent = ruError(err); }
+    return;
+  }
+  const ald = t.closest("[data-al-del]"); if (ald) { try { await store.allowed.remove(ald.dataset.alDel); allowedRows = null; renderAllowed(); } catch (err) { toast(ruError(err), true); } return; }
   if (t.closest("#tipOff")) { lsSet("sredy-tip-off", true); return renderPlan(); }
   const tab = t.closest(".tab"); if (tab) return setView(tab.dataset.v);
 });
@@ -763,6 +810,7 @@ async function authGo() {
   const email = ($("#a-email")?.value || "").trim(); renderAuth.email = email;
   err.textContent = ""; btn.disabled = true;
   try {
+    if (cur !== "code" && email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("В поле «Почта» нужен адрес, например name@gmail.com");
     if (cur === "in") { if (!email || !$("#a-pass").value) throw new Error("Введи почту и пароль."); await store.signIn(email, $("#a-pass").value); return start(); }
     if (cur === "up") {
       const name = $("#a-name").value.trim(); if (!name) throw new Error("Напиши своё имя, чтобы команда тебя узнала.");
