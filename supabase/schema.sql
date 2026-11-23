@@ -106,7 +106,7 @@ create trigger on_auth_user_created after insert on auth.users
 create or replace function public.guard_profile() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
-  if not public.is_admin() or new.id = auth.uid() then
+  if auth.uid() is not null and (not public.is_admin() or new.id = auth.uid()) then
     new.role := old.role;
     new.approved := old.approved;
   end if;
