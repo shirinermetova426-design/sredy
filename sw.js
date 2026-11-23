@@ -1,5 +1,5 @@
 // Офлайн-кеш оболочки приложения. При обновлении сайта поменяй номер версии.
-const CACHE = "sredy-v2";
+const CACHE = "sredy-v3";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "config.js", "vendor/supabase.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 

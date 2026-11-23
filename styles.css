@@ -258,3 +258,74 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:70
 .al-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .al-row b{display:block;font-size:14px}
 .al-row small{display:block;font-size:12px;color:var(--ink-2)}
+
+/* =====================================================================
+   КОМПЬЮТЕРНАЯ ВЕРСИЯ (экран от 1024px)
+   Меню слева, контент в несколько колонок, карточки открываются панелью справа.
+   ===================================================================== */
+.plan-main{display:flex;flex-direction:column;gap:14px;min-width:0}
+.plan-side,.side-brand{display:none}
+.side-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:4px}
+.side-card .sec-h{margin:0 0 6px}
+.side-card .sec-h h2{font-size:16px}
+.side-row{display:flex;align-items:center;gap:10px;text-align:left;padding:9px 6px;border-radius:12px;width:100%}
+.side-row:hover{background:var(--paper)}
+.side-txt{flex:1;min-width:0;font-size:13px;font-weight:700}
+.side-txt small{display:block;font-size:11px;color:var(--ink-2);font-weight:600;margin-top:1px}
+.side-dot{width:10px;height:10px;border-radius:50%;background:var(--blue);flex:none}
+.side-dot.late{background:var(--warn)}
+.side-time{font-weight:900;color:var(--blue);font-variant-numeric:tabular-nums;font-size:13px;width:44px;flex:none}
+.logo-mark.sm{width:40px;height:40px;border-radius:12px;font-size:15px}
+.logo-mark.sm::after{width:22px;height:22px;right:-9px;top:-9px}
+
+@media (min-width:1024px){
+  body{background:var(--paper)}
+  .app{max-width:none;margin:0;padding:0 0 40px 248px;box-shadow:none}
+  /* меню слева */
+  .side-brand{display:flex;position:fixed;left:0;top:0;width:248px;z-index:21;align-items:center;gap:12px;padding:26px 22px 18px;color:var(--white);font-weight:900;font-size:16px;line-height:1.15}
+  .side-brand b{color:var(--lime)}
+  .tabs{left:0;top:0;bottom:0;transform:none;width:248px;max-width:none;border-radius:0;grid-template-columns:1fr;grid-auto-rows:max-content;align-content:start;gap:6px;padding:100px 14px 20px}
+  .tab{flex-direction:row;justify-content:flex-start;gap:12px;font-size:14px;padding:12px 14px;border-radius:14px}
+  .tab:hover{background:rgba(255,255,255,.06);color:var(--white)}
+  .tab[aria-selected="true"]:hover{background:var(--lime);color:var(--ink)}
+  .badge{position:static;margin-left:auto}
+  /* шапка */
+  .top{border-radius:0 0 28px 28px;padding:24px 40px 28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,560px);gap:28px;align-items:end}
+  .brand{align-self:start;align-items:flex-start}
+  .brand h1{font-size:28px}
+  .brand small{font-size:13px}
+  .hero{margin-top:0}
+  /* контент */
+  main{padding:28px 40px;max-width:1440px}
+  .view{gap:18px}
+  #v-plan.view.on{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
+  .plan-side{display:flex;flex-direction:column;gap:14px;position:sticky;top:24px}
+  #installTip{display:none}
+  .stats{max-width:620px}
+  .list.pad{padding-bottom:0}
+  #meetList{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  #taskList{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:12px;align-items:start}
+  #taskList .my-sched{grid-column:1/-1}
+  #teamList,#peopleList,#ideaList{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  #v-team .note{max-width:720px}
+  .card:hover,.task:hover,.side-card:hover{border-color:#C9CEDA}
+  .card{transition:border-color .15s}
+  /* карточки открываются панелью справа */
+  .sheet{left:auto;right:0;top:0;bottom:0;transform:none;max-width:none;width:min(560px,46vw);max-height:none;border-radius:24px 0 0 24px;box-shadow:-20px 0 60px rgba(14,14,16,.18)}
+  .sheet-h{border-radius:24px 0 0 0;padding:18px 24px}
+  .grab{display:none}
+  .sheet-b{padding:20px 24px 32px}
+  .scrim{background:rgba(14,14,16,.28)}
+  .fab{left:14px;right:auto;bottom:24px;width:220px;height:52px;border-radius:14px;display:flex;justify-content:center;gap:8px;z-index:22;font-weight:800;font-size:14px;box-shadow:none}
+  .fab[hidden]{display:none}
+  .fab::after{content:attr(aria-label)}
+  .fab svg{width:20px;height:20px}
+  .toast{bottom:32px;left:calc(50% + 124px)}
+  /* вход */
+  .screen{margin:6vh auto;min-height:auto;border-radius:28px;padding:40px 32px}
+  body:has(#app[hidden]){background:#1A1B20}
+}
+@media (min-width:1024px) and (max-width:1279px){
+  #v-plan.view.on{grid-template-columns:minmax(0,1fr) 300px}
+  .top{grid-template-columns:minmax(0,1fr) 420px}
+}

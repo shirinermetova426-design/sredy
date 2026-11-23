@@ -349,6 +349,22 @@ function renderPlan() {
     `<div class="empty-box">${UI.meetF === "mine" ? "Ты пока не координируешь ни одну встречу." : "В этом месяце встреч нет."}</div>`;
 }
 
+// компьютерная версия: колонка «Моё» рядом с планом
+function renderPlanSide() {
+  const box = $("#planSide"); if (!box) return;
+  const myTasks = S.tasks.filter(t => mine(t) && !t.done).sort((a, b) => (a.due || "9999").localeCompare(b.due || "9999"));
+  const ms = mySched();
+  const myMeet = S.meetings.filter(m => m.coord_id === S.meId && pd(m.date) >= today() && active(m));
+  box.innerHTML = `
+    <div class="side-card"><div class="sec-h"><h2>Мои задачи</h2><button class="link" data-goto="tasks">Все</button></div>
+      ${myTasks.length ? myTasks.slice(0, 6).map(t => `<button class="side-row" data-task="${t.id}"><span class="side-dot ${t.due && pd(t.due) < today() ? "late" : ""}"></span><span class="side-txt">${esc(t.title)}${t.due ? `<small>до ${short(t.due)}${t.dept ? " · " + esc(t.dept) : ""}</small>` : t.dept ? `<small>${esc(t.dept)}</small>` : ""}</span>${!seen.has(t.id) ? `<span class="tag new">Новая</span>` : ""}</button>`).join("") + (myTasks.length > 6 ? `<p class="muted">и ещё ${myTasks.length - 6}</p>` : "") : `<p class="muted">Открытых задач нет.</p>`}
+    </div>
+    <div class="side-card"><div class="sec-h"><h2>Я в регламенте</h2></div>
+      ${ms.length ? ms.map(({ m, it }) => `<button class="side-row" data-open="${m.id}" data-pane="sched"><span class="side-time">${esc(it.t || "—")}</span><span class="side-txt">${esc(it.what)}<small>${esc(cap(fmtD(m.date, { weekday: "short", day: "2-digit", month: "2-digit" })))}</small></span></button>`).join("") : `<p class="muted">Тебя пока не отметили в регламенте.</p>`}
+    </div>
+    ${myMeet.length ? `<div class="side-card"><div class="sec-h"><h2>Я координирую</h2></div>${myMeet.map(m => `<button class="side-row" data-open="${m.id}"><span class="side-time">${pd(m.date).getDate()}.${String(pd(m.date).getMonth() + 1).padStart(2, "0")}</span><span class="side-txt">${esc(m.theme || "Тема не выбрана")}<small>готовность ${readiness(m).p}%</small></span></button>`).join("")}</div>` : ""}`;
+}
+
 function meetCard(m) {
   const r = readiness(m), dl = days(deadline(m), today()), isSat = pd(m.date).getDay() !== 3, past = pd(m.date) < today();
   const taskN = S.tasks.filter(t => t.meeting_id === m.id && !t.done).length;
@@ -458,7 +474,7 @@ function renderBadges() {
 
 function renderApp() {
   if (!S.me) return;
-  renderHeader(); renderPlan(); renderTasks(); renderTeam(); renderIdeas(); renderBadges();
+  renderHeader(); renderPlan(); renderPlanSide(); renderTasks(); renderTeam(); renderIdeas(); renderBadges();
   $("#fab").hidden = (UI.view === "plan" && !isEditor()) || UI.view === "team";
 }
 
@@ -767,7 +783,7 @@ document.addEventListener("click", async e => {
   const tg = t.closest("[data-toggle]");
   if (tg && !tg.disabled) {
     const task = S.tasks.find(x => x.id === tg.dataset.toggle); if (!task) return;
-    task.done = !task.done; renderTasks(); renderBadges();
+    task.done = !task.done; renderTasks(); renderBadges(); renderPlanSide();
     try { await store.tasks.update(task.id, { done: task.done }); } catch (err) { task.done = !task.done; renderTasks(); toast(ruError(err), true); }
     return;
   }
