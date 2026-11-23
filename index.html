@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E0E10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Среды">
+<title>Молодёжка · План сред</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="loading" id="loading">Загрузка…</div>
+
+<!-- Вход и регистрация -->
+<section class="screen" id="auth" hidden aria-label="Вход"></section>
+
+<!-- Ожидание подтверждения -->
+<section class="screen" id="pending" hidden aria-label="Ожидание подтверждения"></section>
+
+<!-- Приложение -->
+<div class="app" id="app" hidden>
+  <header class="top">
+    <div class="brand">
+      <div><h1 id="appTitle">Молодёжка<span>.</span> Среды</h1><small id="todayLbl"></small></div>
+      <button class="me-btn" id="meBtn" aria-label="Мой профиль"></button>
+    </div>
+    <div class="hero" id="hero"></div>
+  </header>
+
+  <main>
+    <section class="view on" id="v-plan" aria-label="Среды">
+      <div id="installTip"></div>
+      <div class="stats" id="stats"></div>
+      <div class="sec-h"><h2>План по месяцам</h2><button class="link" id="worshipBtn">Темы для Катарины</button></div>
+      <div class="chips" id="months" role="group" aria-label="Месяц"></div>
+      <div class="list pad" id="meetList"></div>
+    </section>
+
+    <section class="view" id="v-tasks" aria-label="Задачи">
+      <div class="sec-h"><h2>Задачи</h2><select class="mini" id="deptFilter" aria-label="Отдел"></select></div>
+      <div class="chips" id="taskFilter" role="group" aria-label="Фильтр задач"></div>
+      <div class="list pad" id="taskList"></div>
+    </section>
+
+    <section class="view" id="v-team" aria-label="Команда">
+      <div id="pendingList" class="list"></div>
+      <div class="sec-h"><h2>Кто за что</h2><span class="muted">планёрка 16.11</span></div>
+      <div class="list" id="teamList"></div>
+      <div class="sec-h"><h2>Участники</h2><span class="muted" id="peopleCount"></span></div>
+      <div class="list" id="peopleList"></div>
+      <div class="note">
+        <h3>Правила планирования</h3>
+        <ul>
+          <li>За неделю до встречи готово всё: тема, люди, служители.</li>
+          <li>Планируем на 1–2 месяца вперёд.</li>
+          <li>Каждую среду ведёт координатор среды, с ним держим связь.</li>
+          <li>Темы заранее передаём прославлению и согласуем с Катариной.</li>
+        </ul>
+      </div>
+      <div style="height:60px"></div>
+    </section>
+
+    <section class="view" id="v-ideas" aria-label="Форматы и идеи">
+      <div class="sec-h"><h2>Форматы и идеи</h2></div>
+      <p class="muted">Базовые форматы сред и идеи от ребят. Предложить новый формат можно кнопкой «+».</p>
+      <div class="list pad" id="ideaList"></div>
+    </section>
+  </main>
+
+  <button class="fab" id="fab" aria-label="Добавить">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+
+  <nav class="tabs" role="tablist" aria-label="Разделы">
+    <button class="tab" role="tab" aria-selected="true" data-v="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Среды</button>
+    <button class="tab" role="tab" aria-selected="false" data-v="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>Задачи<span class="badge" id="taskBadge" hidden></span></button>
+    <button class="tab" role="tab" aria-selected="false" data-v="team"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.5c2.3.3 3.9 2 4.5 4.5"/></svg>Команда<span class="badge" id="teamBadge" hidden></span></button>
+    <button class="tab" role="tab" aria-selected="false" data-v="ideas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Идеи</button>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-h"><div style="flex:1;min-width:0"><div class="grab"></div><h2 id="sheetTitle"></h2><small id="sheetSub"></small></div><button class="link" id="sheetClose">Закрыть</button></div>
+  <div class="sheet-b" id="sheetBody"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
